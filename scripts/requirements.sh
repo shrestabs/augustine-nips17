@@ -9,53 +9,56 @@ mkdir -p "${LIB_DIR}"
 PSL_JAR_PATH="${LIB_DIR}/psl-cli-CANARY-2.1.2.jar"
 PSL_JAR_URL='https://linqs-data.soe.ucsc.edu/maven/repositories/psl-releases/org/linqs/psl-cli/CANARY-2.1.2/psl-cli-CANARY-2.1.2.jar'
 
-PSL_MOSEK_JAR_PATH="${LIB_DIR}/psl-mosek-2.1.0-NIPS17.jar"
-PSL_MOSEK_JAR_URL='https://linqs-data.soe.ucsc.edu/public/augustine-nips17-data/psl-mosek-2.1.0-NIPS17.jar'
-
-PSL_CVXPY_JAR_PATH="${LIB_DIR}/psl-cvxpy-2.1.0-NIPS17.jar"
-PSL_CVXPY_JAR_URL='https://linqs-data.soe.ucsc.edu/public/augustine-nips17-data/psl-cvxpy-2.1.0-NIPS17.jar'
-
-PSL2_JAR_PATH="${LIB_DIR}/psl-cli-2.0.0-NIPS17.jar"
-PSL2_JAR_URL='https://linqs-data.soe.ucsc.edu/public/augustine-nips17-data/psl-cli-2.0.0-NIPS17.jar'
-
-PSL121_JAR_PATH="${LIB_DIR}/psl121-1.2.1.jar"
-PSL121_JAR_URL='https://linqs-data.soe.ucsc.edu/public/augustine-nips17-data/psl121-1.2.1.jar'
-
 TUFFY_JAR_PATH="${LIB_DIR}/tuffy-modified.jar"
 TUFFY_CONFIG_PATH="${THIS_DIR}/tuffy.conf"
 TUFFY_JAR_URL='https://linqs-data.soe.ucsc.edu/public/augustine-nips17-data/tuffy-modified.jar'
 
 # Get the java command we want all tests using.
 function requirements::java() {
-   local memKB=`cat /proc/meminfo | grep 'MemTotal' | sed 's/^[^0-9]\+\([0-9]\+\)[^0-9]\+$/\1/'`
-   local memOption=''
+    unameOut="$(uname -s)"
+    case "${unameOut}" in
+        Linux*)     machine=Linux;;
+        Darwin*)    machine=Mac;;
+        CYGWIN*)    machine=Cygwin;;
+        MINGW*)     machine=MinGw;;
+        *)          machine="UNKNOWN:${unameOut}"
+    esac
 
-   if [ "$memKB" -gt "262144000" ]; then
-      memOption='-Xmx250G -Xms250G'
-   elif [ "$memKB" -gt "209715200" ]; then
-      memOption='-Xmx200G -Xms200G'
-   elif [ "$memKB" -gt "104857600" ]; then
-      memOption='-Xmx100G -Xms100G'
-   elif [ "$memKB" -gt "52428800" ]; then
-      memOption='-Xmx50G -Xms50G'
-   elif [ "$memKB" -gt "26214400" ]; then
-      memOption='-Xmx25G -Xms25G'
-   elif [ "$memKB" -gt "15728640" ]; then
-      memOption='-Xmx15G -Xms15G'
-   elif [ "$memKB" -gt "10485760" ]; then
-      memOption='-Xmx10G -Xms10G'
-   elif [ "$memKB" -gt "5242880" ]; then
-      memOption='-Xmx5G -Xms5G'
+    if [ "$machine" = "Darwin" ]; then
+        memOption='-Xmx5G -Xms5G'
+    elif [ "$machine" = "Linux" ]; then
+        local memKB=`cat /proc/meminfo | grep 'MemTotal' | sed 's/^[^0-9]\+\([0-9]\+\)[^0-9]\+$/\1/'`
+        local memOption=''
+        if [ "$memKB" -gt "262144000" ]; then
+            memOption='-Xmx250G -Xms250G'
+        elif [ "$memKB" -gt "209715200" ]; then
+            memOption='-Xmx200G -Xms200G'
+        elif [ "$memKB" -gt "104857600" ]; then
+            memOption='-Xmx100G -Xms100G'
+        elif [ "$memKB" -gt "52428800" ]; then
+            memOption='-Xmx50G -Xms50G'
+        elif [ "$memKB" -gt "26214400" ]; then
+            memOption='-Xmx25G -Xms25G'
+        elif [ "$memKB" -gt "15728640" ]; then
+            memOption='-Xmx15G -Xms15G'
+        elif [ "$memKB" -gt "10485760" ]; then
+            memOption='-Xmx10G -Xms10G'
+        elif [ "$memKB" -gt "5242880" ]; then
+            memOption='-Xmx5G -Xms5G'
+        fi
    fi
 
    echo "java $memOption"
+
 }
 
 # The time command to use.
 # Note that we are not using the builtin time command so we can get
 # peak memory information.
 function requirements::time() {
-   echo '/usr/bin/time -v'
+    # -v is supported in gnu-time. not in mac.  
+    # echo '/usr/bin/time -v'
+    echo '/usr/bin/time'
 }
 
 function requirements::get_fetch_command() {
@@ -163,11 +166,7 @@ function requirements::fetch_and_extract_tar() {
 
 function requirements::fetch_all_jars() {
    requirements::fetch_file "${PSL_JAR_URL}" "${PSL_JAR_PATH}" 'PSL'
-   requirements::fetch_file "${PSL_MOSEK_JAR_URL}" "${PSL_MOSEK_JAR_PATH}" 'PSL_MOSEK'
-   requirements::fetch_file "${PSL_CVXPY_JAR_URL}" "${PSL_CVXPY_JAR_PATH}" 'PSL_CVXPY'
-   requirements::fetch_file "${PSL2_JAR_URL}" "${PSL2_JAR_PATH}" 'PSL2'
-   requirements::fetch_file "${PSL121_JAR_URL}" "${PSL121_JAR_PATH}" 'PSL121'
-   requirements::fetch_file "${TUFFY_JAR_URL}" "${TUFFY_JAR_PATH}" 'Tuffy'
+   #TODO(shrbs): download tuffy later requirements::fetch_file "${TUFFY_JAR_URL}" "${TUFFY_JAR_PATH}" 'Tuffy'
 }
 
 function requirements::main() {

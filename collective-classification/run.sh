@@ -6,15 +6,12 @@ THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" && source "${THIS_D
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" && source "${THIS_DIR}/../scripts/tuffy.sh"
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Redefine for experiment specifics.
-PSL_METHODS=("${PSL_ACCURACY_METHODS[@]}")
-PSL_METHODS_CLI_OPTIONS=("${PSL_ACCURACY_METHODS_CLI_OPTIONS[@]}")
-PSL_METHODS_JARS=("${PSL_ACCURACY_METHODS_JARS[@]}")
-
 function run() {
    local outBaseDir="${THIS_DIR}/out"
-   local datasets='citeseer cora'
-   local folds=`seq -s ' ' 0 19`
+   # TODO(shrbs): get one dataset working local datasets='citeseer cora'
+   local datasets='citeseer'
+   # TODO(shrbs): get one fold working local folds=`seq -s ' ' 0 19`
+   local folds=`seq -s ' ' 0 1`
 
    for dataset in $datasets; do
       for fold in $folds; do
@@ -29,11 +26,13 @@ function run() {
             true
 
          # Tuffy
-         tuffy::runSuite \
-            "${THIS_DIR}" \
-            "$THIS_DIR/data/splits" \
-            "${dataset}/${fold}"
+        #  tuffy::runSuite \
+        #     "${THIS_DIR}" \
+        #     "$THIS_DIR/data/splits" \
+        #     "${dataset}/${fold}"
+
       done
+
    done
 }
 

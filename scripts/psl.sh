@@ -5,85 +5,56 @@ THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 CLI_MAIN_CLASS='org.linqs.psl.cli.Launcher'
 
-function psl::maxwalksatOptions() {
-   echo '-D mpeinference.reasoner=org.linqs.psl.reasoner.bool.BooleanMaxWalkSat -D mpeinference.groundrulestore=org.linqs.psl.application.groundrulestore.AtomRegisterGroundRuleStore -D mpeinference.termstore=org.linqs.psl.reasoner.term.ConstraintBlockerTermStore -D mpeinference.termgenerator=org.linqs.psl.reasoner.term.ConstraintBlockerTermGenerator -D weightlearning.reasoner=org.linqs.psl.reasoner.bool.BooleanMaxWalkSat -D weightlearning.groundrulestore=org.linqs.psl.application.groundrulestore.AtomRegisterGroundRuleStore -D weightlearning.termstore=org.linqs.psl.reasoner.term.ConstraintBlockerTermStore -D weightlearning.termgenerator=org.linqs.psl.reasoner.term.ConstraintBlockerTermGenerator -D booleanmaxwalksat.maxflips=100000'
-}
-
-function psl::mcsatOptions() {
-   echo '-D mpeinference.reasoner=org.linqs.psl.reasoner.bool.BooleanMCSat -D mpeinference.groundrulestore=org.linqs.psl.application.groundrulestore.AtomRegisterGroundRuleStore -D mpeinference.termstore=org.linqs.psl.reasoner.term.ConstraintBlockerTermStore -D mpeinference.termgenerator=org.linqs.psl.reasoner.term.ConstraintBlockerTermGenerator -D weightlearning.reasoner=org.linqs.psl.reasoner.bool.BooleanMCSat -D weightlearning.groundrulestore=org.linqs.psl.application.groundrulestore.AtomRegisterGroundRuleStore -D weightlearning.termstore=org.linqs.psl.reasoner.term.ConstraintBlockerTermStore -D weightlearning.termgenerator=org.linqs.psl.reasoner.term.ConstraintBlockerTermGenerator'
-}
-
-# Learn MaxWalkSat, Eval MCSat
-function psl::mixedBooleanOptions() {
-   echo '-D weightlearning.reasoner=org.linqs.psl.reasoner.bool.BooleanMaxWalkSat -D weightlearning.groundrulestore=org.linqs.psl.application.groundrulestore.AtomRegisterGroundRuleStore -D weightlearning.termstore=org.linqs.psl.reasoner.term.ConstraintBlockerTermStore -D weightlearning.termgenerator=org.linqs.psl.reasoner.term.ConstraintBlockerTermGenerator -D booleanmaxwalksat.maxflips=100000 -D mpeinference.reasoner=org.linqs.psl.reasoner.bool.BooleanMCSat -D mpeinference.groundrulestore=org.linqs.psl.application.groundrulestore.AtomRegisterGroundRuleStore -D mpeinference.termstore=org.linqs.psl.reasoner.term.ConstraintBlockerTermStore -D mpeinference.termgenerator=org.linqs.psl.reasoner.term.ConstraintBlockerTermGenerator'
-}
-
-function psl::mosekOptions() {
-   echo '-D conictermstore.conicprogramsolver=org.linqs.psl.experimental.optimizer.conic.mosek.Mosek -D mpeinference.reasoner=org.linqs.psl.experimental.reasoner.conic.ConicReasoner -D mpeinference.termstore=org.linqs.psl.experimental.reasoner.conic.ConicTermStore -D mpeinference.termgenerator=org.linqs.psl.experimental.reasoner.conic.ConicTermGenerator'
-}
-
-function psl::cvxpxOptions() {
-   echo "-D mpeinference.reasoner=org.linqs.psl.experimental.reasoner.general.CVXPYReasoner -D mpeinference.termstore=org.linqs.psl.experimental.reasoner.general.JSONSerialTermStore -D mpeinference.termgenerator=org.linqs.psl.experimental.reasoner.general.JSONSerialTermGenerator -D executablereasoner.executablepath=${LIB_DIR}/cvxpy_reasoner.py"
-}
-
-PSL_METHODS=('psl-admm-h2' 'psl-admm-postgres' 'psl-maxwalksat-h2' 'psl-maxwalksat-postgres' 'psl-mcsat-h2' 'psl-mcsat-postgres' 'psl-2.0' 'psl-mosek-h2' 'psl-mosek-postgres' 'psl-1.2.1' 'psl-cvxpy-h2' 'psl-cvxpy-postgres' 'psl-mixedboolean-h2' 'psl-mixedboolean-postgres')
-PSL_METHODS_CLI_OPTIONS=('' '--postgres psl' "`psl::maxwalksatOptions`" "`psl::maxwalksatOptions` --postgres psl" "`psl::mcsatOptions`" "`psl::mcsatOptions` --postgres psl" '' "`psl::mosekOptions`" "`psl::mosekOptions` --postgres psl" '' "`psl::cvxpxOptions`" "`psl::cvxpxOptions` --postgres psl" "`psl::mixedBooleanOptions`" "`psl::mixedBooleanOptions` --postgres psl")
-PSL_METHODS_JARS=("${PSL_JAR_PATH}" "${PSL_JAR_PATH}" "${PSL_JAR_PATH}" "${PSL_JAR_PATH}" "${PSL_JAR_PATH}" "${PSL_JAR_PATH}" "${PSL2_JAR_PATH}" "${PSL_JAR_PATH}:${PSL_MOSEK_JAR_PATH}" "${PSL_JAR_PATH}:${PSL_MOSEK_JAR_PATH}" "${PSL121_JAR_PATH}" "${PSL_JAR_PATH}:${PSL_CVXPY_JAR_PATH}" "${PSL_JAR_PATH}:${PSL_CVXPY_JAR_PATH}" "${PSL_JAR_PATH}" "${PSL_JAR_PATH}")
-
-# Shortcuts for the standard experiments.
-PSL_ACCURACY_METHODS=('psl-admm-postgres' 'psl-maxwalksat-postgres' 'psl-mcsat-postgres' 'psl-mixedboolean-postgres')
-PSL_ACCURACY_METHODS_CLI_OPTIONS=('--postgres psl' "`psl::maxwalksatOptions` --postgres psl" "`psl::mcsatOptions` --postgres psl" "`psl::mixedBooleanOptions` --postgres psl")
-PSL_ACCURACY_METHODS_JARS=("${PSL_JAR_PATH}" "${PSL_JAR_PATH}" "${PSL_JAR_PATH}" "${PSL_JAR_PATH}")
-
+PSL_METHODS_CLI_OPTIONS=('--postgres psl')
 PSL_DEFAULT_OPTIONS='-D log4j.threshold=DEBUG'
 PSL_DEFAULT_LEARN_OPTIONS=''
 PSL_DEFAULT_EVAL_OPTIONS=''
 
 function psl::runSuite() {
-   local modelName=$1
-   local baseDir=$2
+   local modelName=$1   # e.g. collective-classification
+   local baseDir=$2     # e.g. 
    local runId=$3
    local genDataLearnParams=$4
    local genDataEvalParams=$5
-   local evalCliOptions=$6
+   local evalCliOptions=$6 #
    local runLearn=$7
 
    local outBaseDir="${baseDir}/out"
    local cliDir="${baseDir}/psl-cli"
    local scriptsDir="${baseDir}/scripts"
 
-   for i in "${!PSL_METHODS[@]}"; do
-      local method="${PSL_METHODS[$i]}"
-      local methodCliOptions="${PSL_METHODS_CLI_OPTIONS[$i]}"
-      local methodJar="${PSL_METHODS_JARS[$i]}"
+   # just 1 PSL method in this repo
+    local methodCliOptions="${PSL_METHODS_CLI_OPTIONS}"     # e.g. --postgres psl
+    local methodJar="${PSL_JAR_PATH}"
 
-      local outDir="${outBaseDir}/${method}/${runId}"
-      local modelPath="${cliDir}/${modelName}.psl"
+    local outDir="${outBaseDir}/${method}/${runId}"
+    local modelPath="${cliDir}/${modelName}.psl"
 
-      if [ "${runLearn}" = true ] ; then
-         psl::runLearn \
-            "${outDir}" \
-            "${modelName}" \
-            "${cliDir}" \
-            "${scriptsDir}" \
-            "${genDataLearnParams}" \
-            "${modelPath}" \
-            "${methodCliOptions}" \
-            "${methodJar}"
+#TODO(shrbs): add runEval here
 
-         modelPath="${outDir}/${modelName}-learned.psl"
-      fi
+    if [ "${runLearn}" = true ] ; then
+        psl::runLearn \
+        "${outDir}" \
+        "${modelName}" \
+        "${cliDir}" \
+        "${scriptsDir}" \
+        "${genDataLearnParams}" \
+        "${modelPath}" \
+        "${methodCliOptions}" \
+        "${methodJar}"
 
-      psl::runEval \
-         "${outDir}" \
-         "${modelName}" \
-         "${cliDir}" \
-         "${scriptsDir}" \
-         "${genDataEvalParams}" \
-         "${modelPath}" \
-         "${methodCliOptions} ${evalCliOptions}" \
-         "${methodJar}"
-   done
+        modelPath="${outDir}/${modelName}-learned.psl"
+    fi
+
+    psl::runEval \
+        "${outDir}" \
+        "${modelName}" \
+        "${cliDir}" \
+        "${scriptsDir}" \
+        "${genDataEvalParams}" \
+        "${modelPath}" \
+        "${methodCliOptions} ${evalCliOptions}" \
+        "${methodJar}"
 }
 
 function psl::runLearn() {

@@ -2,8 +2,11 @@ DATASET_SEARCH_PATTERN = '__dataset__'
 FOLD_SEARCH_PATTERN = '__fold__'
 METHOD_SEARCH_PATTERN = '__type__'
 
-DATASETS = ['citeseer', 'cora']
-FOLDS =  (0...20).to_a()
+# DATASETS = ['citeseer', 'cora']
+# FOLDS =  (0...20).to_a()
+#TODO(shrbs): fix datasets
+DATASETS = ['citeseer']
+FOLDS =  (0...2).to_a()
 METHODS = ['learn', 'eval']
 
 def main(templatePath, dataset, fold, method, outPath)
