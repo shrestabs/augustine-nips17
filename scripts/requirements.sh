@@ -6,8 +6,8 @@ THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 LIB_DIR="${THIS_DIR}/lib"
 mkdir -p "${LIB_DIR}"
 
-PSL_JAR_PATH="${LIB_DIR}/psl-cli-CANARY-2.1.2.jar"
-PSL_JAR_URL='https://linqs-data.soe.ucsc.edu/maven/repositories/psl-releases/org/linqs/psl-cli/CANARY-2.1.2/psl-cli-CANARY-2.1.2.jar'
+PSL_JAR_PATH="${LIB_DIR}/psl-cli-2.2.0-SNAPSHOT.jar"
+PSL_JAR_URL="https://linqs-data.soe.ucsc.edu/maven/repositories/psl-releases/org/linqs/psl-cli/2.2.0-SNAPSHOT/psl-cli-2.2.0-SNAPSHOT.jar"
 
 TUFFY_JAR_PATH="${LIB_DIR}/tuffy-modified.jar"
 TUFFY_CONFIG_PATH="${THIS_DIR}/tuffy.conf"

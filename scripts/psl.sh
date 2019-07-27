@@ -4,20 +4,24 @@ THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" && source "${THIS_D
 THIS_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 CLI_MAIN_CLASS='org.linqs.psl.cli.Launcher'
+WEIGHT_LEARNING_CLASS='org.linqs.psl.application.learning.weight'
+EVALUTION_METRIC_CLASS='org.linqs.psl.evaluation.statistics'
 
 PSL_METHODS_CLI_OPTIONS=('--postgres psl')
 PSL_DEFAULT_OPTIONS='-D log4j.threshold=DEBUG'
 PSL_DEFAULT_LEARN_OPTIONS=''
 PSL_DEFAULT_EVAL_OPTIONS=''
 
+
 function psl::runSuite() {
    local modelName=$1   # e.g. collective-classification
-   local baseDir=$2     # e.g. 
-   local runId=$3
-   local genDataLearnParams=$4
-   local genDataEvalParams=$5
-   local evalCliOptions=$6 #
-   local runLearn=$7
+   local baseDir=$2     # e.g. ./collective-classification
+   local runId=$3       #e.g citseer/0 where 0 is split
+   local genDataLearnParams=$4 # e.g. ${dataset} ${fold} learn"
+   local genDataEvalParams=$5   # sent directly to ruby scripts
+   local evalCliOptions=$6  # sent directly to ruby scripts
+   local wlMethod=$7    # e.g. bayesian.GaussianProcessPrior
+   local evalMethod=$8    # e.g CategoricalEvaluator
 
    local outBaseDir="${baseDir}/out"
    local cliDir="${baseDir}/psl-cli"
@@ -25,15 +29,24 @@ function psl::runSuite() {
 
    # just 1 PSL method in this repo
     local methodCliOptions="${PSL_METHODS_CLI_OPTIONS}"     # e.g. --postgres psl
-    local methodJar="${PSL_JAR_PATH}"
-
     local outDir="${outBaseDir}/${method}/${runId}"
-    local modelPath="${cliDir}/${modelName}.psl"
+    local modelPath="${cliDir}/${modelName}.psl"    # e.g. psl-cli/collective-classification.psl
 
-#TODO(shrbs): add runEval here
+    # evaluate uniform before starting weight learning once i.e the first time
+    if [[ ! -f "${outDir}/out-eval-uniform.txt" ]]; then
+        psl::runEval \
+            "${outDir}" \
+            "${modelName}" \
+            "${cliDir}" \
+            "${scriptsDir}" \
+            "${genDataEvalParams}" \
+            "${modelPath}" \
+            "${methodCliOptions} ${evalCliOptions}" \
+            "uniform"   \
+            "${evalMethod}"
+    fi
 
-    if [ "${runLearn}" = true ] ; then
-        psl::runLearn \
+    psl::runLearn \
         "${outDir}" \
         "${modelName}" \
         "${cliDir}" \
@@ -41,11 +54,12 @@ function psl::runSuite() {
         "${genDataLearnParams}" \
         "${modelPath}" \
         "${methodCliOptions}" \
-        "${methodJar}"
+        "${wlMethod}"
 
-        modelPath="${outDir}/${modelName}-learned.psl"
-    fi
+    modelPath="${outDir}/${modelName}-${wlMethod}-learned.psl"
 
+
+    # evaluate the particular weight learning method
     psl::runEval \
         "${outDir}" \
         "${modelName}" \
@@ -54,7 +68,8 @@ function psl::runSuite() {
         "${genDataEvalParams}" \
         "${modelPath}" \
         "${methodCliOptions} ${evalCliOptions}" \
-        "${methodJar}"
+        "${wlMethod}"   \
+        "${evalMethod}"
 }
 
 function psl::runLearn() {
@@ -65,19 +80,19 @@ function psl::runLearn() {
    local genDataParams=$5
    local modelPath=$6
    local extraCliOptions=$7
-   local classpath=$8
+   local wlMethod=$8
 
    mkdir -p $outDir
 
    local generateDataScript="${scriptsDir}/generateDataFiles.rb"
    local dataTemplatePath="${cliDir}/${modelName}-template.data"
-   local defaultLearnedModelPath="${cliDir}/${modelName}-learned.psl"
+   local defaultLearnedModelPath="${cliDir}/${modelName}-${wlMethod}-learned.psl"
    local outputLearnPath="${outDir}/out-learn.txt"
    local outputTimePath="${outDir}/time-learn.txt"
    local learnDataFilePath="${outDir}/learn.data"
-   local learnedModelPath="${outDir}/${modelName}-learned.psl"
+   local learnedModelPath="${outDir}/${modelName}-${wlMethod}-learned.psl"
 
-   if [ -f "${outputLearnPath}" ]; then
+   if [ -f "${learnedModelPath}" ]; then
       echo "Target PSL (learn) file exists (${outputLearnPath}), skipping run."
       return
    fi
@@ -87,16 +102,17 @@ function psl::runLearn() {
 
    # Build the CLI options one at a time for visibility.
    local cliOptions=''
-   cliOptions="${cliOptions} -learn"
-   cliOptions="${cliOptions} -data ${learnDataFilePath}"
-   cliOptions="${cliOptions} -model ${modelPath}"
+   cliOptions="${cliOptions} --model ${modelPath}"
+   cliOptions="${cliOptions} --learn  ${WEIGHT_LEARNING_CLASS}.${wlMethod}"
+   cliOptions="${cliOptions} --data ${learnDataFilePath}"
    cliOptions="${cliOptions} ${extraCliOptions}"
-   cliOptions="${cliOptions} -output ${outDir}"
+   cliOptions="${cliOptions} --output ${outDir}"
    cliOptions="${cliOptions} ${PSL_DEFAULT_OPTIONS}"
    cliOptions="${cliOptions} ${PSL_DEFAULT_LEARN_OPTIONS}"
 
    echo "Running PSL (learn). Output redirected to ${outputLearnPath}."
-   `requirements::time` `requirements::java` -cp "${classpath}" $CLI_MAIN_CLASS $cliOptions > $outputLearnPath 2> $outputTimePath
+   `requirements::time` `requirements::java` -jar "${PSL_JAR_PATH}" $cliOptions > $outputLearnPath 2> $outputTimePath
+
    mv ${defaultLearnedModelPath} ${learnedModelPath}
 }
 
@@ -108,14 +124,15 @@ function psl::runEval() {
    local genDataParams=$5
    local modelPath=$6
    local extraCliOptions=$7
-   local classpath=$8
+   local wlMethod=$8
+   local evalMethod=$9
 
    mkdir -p $outDir
 
    local generateDataScript="${scriptsDir}/generateDataFiles.rb"
    local dataTemplatePath="${cliDir}/${modelName}-template.data"
-   local outputEvalPath="${outDir}/out-eval.txt"
-   local outputTimePath="${outDir}/time-eval.txt"
+   local outputEvalPath="${outDir}/out-eval-${wlMethod}.txt"
+   local outputTimePath="${outDir}/time-eval-${wlMethod}.txt"
    local evalDataFilePath="${outDir}/eval.data"
 
    if [ -f "${outputEvalPath}" ]; then
@@ -128,14 +145,14 @@ function psl::runEval() {
 
    # Build the CLI options one at a time for visibility.
    local cliOptions=''
-   cliOptions="${cliOptions} -infer"
-   cliOptions="${cliOptions} -data ${evalDataFilePath}"
-   cliOptions="${cliOptions} -model ${modelPath}"
+   cliOptions="${cliOptions} --model ${modelPath}"
+   cliOptions="${cliOptions} --data ${evalDataFilePath}" # e.g. /shresta/views/augustine-nips17-weightlearning-experiments/collective-classification/out//citeseer/1/eval.data
    cliOptions="${cliOptions} ${extraCliOptions}"
-   cliOptions="${cliOptions} -output ${outDir}"
+   cliOptions="${cliOptions} --output ${outDir}"
    cliOptions="${cliOptions} ${PSL_DEFAULT_OPTIONS}"
-   cliOptions="${cliOptions} ${PSL_DEFAULT_EVAL_OPTIONS}"
+   cliOptions="${cliOptions} --infer"
+   cliOptions="${cliOptions} --eval ${EVALUTION_METRIC_CLASS}.${evalMethod}"
 
    echo "Running PSL (eval). Output redirected to ${outputEvalPath}."
-   `requirements::time` `requirements::java` -cp "${classpath}" $CLI_MAIN_CLASS $cliOptions > $outputEvalPath 2> $outputTimePath
+   `requirements::time` `requirements::java` -jar "${PSL_JAR_PATH}" $cliOptions > $outputEvalPath 2> $outputTimePath
 }

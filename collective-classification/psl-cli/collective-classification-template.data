@@ -3,11 +3,11 @@ predicates:
    HasCat/2: open
 
 observations:
-   HasCat: data/splits/__dataset__/__fold__/__type__/hasCat_obs.txt
-   Link: data/splits/__dataset__/__fold__/__type__/link_obs.txt
+   HasCat: ../../../data/splits/__dataset__/__fold__/__type__/hasCat_obs.txt
+   Link: ../../../data/splits/__dataset__/__fold__/__type__/link_obs.txt
 
 targets:
-   HasCat: data/splits/__dataset__/__fold__/__type__/hasCat_targets.txt
+   HasCat: ../../../data/splits/__dataset__/__fold__/__type__/hasCat_targets.txt
 
 truth:
-   HasCat: data/splits/__dataset__/__fold__/__type__/hasCat_truth.txt
+   HasCat: ../../../data/splits/__dataset__/__fold__/__type__/hasCat_truth.txt

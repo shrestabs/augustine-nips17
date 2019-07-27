@@ -7,6 +7,7 @@ require 'set'
 # This is a very general version.
 # More specific scripts can be found in each experiment's script directory.
 
+# TODO(shrbs) scale this per dataset
 EVAL_OUTPUT_FILENAME = 'out-eval.txt'
 
 BASE_HEADERS = ['Dataset', 'Method', 'Sub-Dataset', 'Fold']
